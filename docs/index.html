@@ -3,7 +3,11 @@
 
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NeuroCheck - Sistem Prediksi Penyakit Otak</title>
+    <meta name="description" content="Sistem Prediksi Penyakit Otak berbasis AI untuk klasifikasi 10 kondisi neurologis dari citra scan MRI/CT, dilengkapi rekam medis pasien dan laporan klinis.">
+    <meta property="og:title" content="NeuroCheck - Sistem Prediksi Penyakit Otak">
+    <meta property="og:description" content="Sistem Prediksi Penyakit Otak berbasis AI untuk klasifikasi 10 kondisi neurologis dari citra scan MRI/CT, dilengkapi rekam medis pasien dan laporan klinis.">
     <link rel="stylesheet" href="css/style.css">
     <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
@@ -30,6 +34,9 @@
 
                 <div id="logged-out-view">
                     <div id="g_id_signin_container"></div>
+                    <div style="margin-top:14px; display:flex; gap:10px; align-items:center;">
+                        <button type="button" class="btn btn-primary" onclick="loginAsDemoUser()">Masuk Mode Dokter Demo &rarr;</button>
+                    </div>
                     <p id="login-status" style="color:var(--text-muted); font-size:0.85rem; margin-top:10px;"></p>
                 </div>
                 <div id="logged-in-view" class="hidden">
@@ -84,15 +91,33 @@
             document.getElementById("logged-in-view").classList.remove("hidden");
         } else {
             window.onload = function () {
-                google.accounts.id.initialize({
-                    client_id: GOOGLE_CLIENT_ID,
-                    callback: handleGoogleCredentialResponse,
-                });
-                google.accounts.id.renderButton(
-                    document.getElementById("g_id_signin_container"),
-                    { theme: "filled_blue", size: "large", text: "signin_with" }
-                );
+                if (typeof GOOGLE_CLIENT_ID !== "undefined" && GOOGLE_CLIENT_ID && typeof google !== "undefined" && google.accounts) {
+                    try {
+                        google.accounts.id.initialize({
+                            client_id: GOOGLE_CLIENT_ID,
+                            callback: handleGoogleCredentialResponse,
+                        });
+                        google.accounts.id.renderButton(
+                            document.getElementById("g_id_signin_container"),
+                            { theme: "filled_blue", size: "large", text: "signin_with" }
+                        );
+                    } catch (e) {
+                        console.warn("GIS init note:", e);
+                    }
+                }
             };
+        }
+
+        async function loginAsDemoUser() {
+            const statusEl = document.getElementById("login-status");
+            try {
+                if (statusEl) statusEl.textContent = "Memproses login dokter demo...";
+                const result = await apiPostJSON("/api/auth/demo", {});
+                saveSession(result.token, result.user, "user");
+                window.location.href = "dashboard.html";
+            } catch (err) {
+                if (statusEl) statusEl.textContent = "Login gagal: " + err.message;
+            }
         }
     </script>
 </body>

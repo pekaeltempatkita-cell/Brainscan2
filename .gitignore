@@ -1,0 +1,14 @@
+__pycache__/
+*.pyc
+.env
+venv/
+.venv/
+
+# Data & hasil generate (jangan ikut ke-commit -- berisi data pasien & file besar)
+outputs/checkpoints/*.onnx
+outputs/checkpoints/*.pth
+outputs/figures/*.png
+outputs/reports/*.pdf
+data/brainscan.db
+temp_uploads/
+onnx_models/*.onnx

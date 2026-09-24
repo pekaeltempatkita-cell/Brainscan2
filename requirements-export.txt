@@ -1,0 +1,13 @@
+# Dependencies ini HANYA buat jalanin scripts/export_to_onnx.py di komputer/Colab kamu.
+# JANGAN dipasang di server produksi (Google AI Studio) -- ini yang bikin ukuran
+# app-nya gede. Backend produksi cukup pakai requirements.txt (onnxruntime, bukan torch).
+
+torch>=2.5.0
+torchvision>=0.20.0
+timm>=0.9.0
+onnx>=1.16.0
+onnxscript>=0.1.0
+onnxruntime>=1.18.0
+numpy>=1.24.0
+python-dotenv>=1.0.0
+huggingface_hub>=0.24.0

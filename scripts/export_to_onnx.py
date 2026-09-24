@@ -39,28 +39,49 @@ def load_checkpoint(model, path):
 
 def export_one(model, dummy_input, out_path, input_names, output_names):
     print(f"\n=== Export -> {out_path.name} ===")
-    onnx_program = torch.onnx.export(
-        model, (dummy_input,), dynamo=True,
-        input_names=input_names, output_names=output_names,
-    )
-    onnx_program.save(str(out_path))
 
-    # Validasi struktur ONNX-nya sehat
+    torch.onnx.export(
+        model,
+        dummy_input,
+        str(out_path),
+        input_names=input_names,
+        output_names=output_names,
+        opset_version=18,
+        dynamo=False,
+    )
+
+    # Validasi struktur ONNX
     onnx_model = onnx.load(str(out_path))
     onnx.checker.check_model(onnx_model)
+
     print(f"[OK] Struktur ONNX valid: {out_path}")
 
-    # Bandingkan angka keluaran PyTorch vs ONNX Runtime -- WAJIB SAMA (toleransi kecil)
+    # Bandingkan PyTorch vs ONNX Runtime
     with torch.no_grad():
-        torch_out = model(dummy_input).numpy()
+        torch_out = model(dummy_input).cpu().numpy()
 
-    session = onnxruntime.InferenceSession(str(out_path), providers=["CPUExecutionProvider"])
-    onnx_out = session.run(None, {input_names[0]: dummy_input.numpy()})[0]
+    session = onnxruntime.InferenceSession(
+        str(out_path),
+        providers=["CPUExecutionProvider"],
+    )
+
+    onnx_out = session.run(
+        None,
+        {input_names[0]: dummy_input.cpu().numpy()},
+    )[0]
 
     max_diff = np.abs(torch_out - onnx_out).max()
-    print(f"[CEK] Selisih maksimum PyTorch vs ONNX: {max_diff:.6f}")
+
+    print(
+        f"[CEK] Selisih maksimum PyTorch vs ONNX: "
+        f"{max_diff:.6f}"
+    )
+
     if max_diff > 1e-3:
-        print("[PERINGATAN] Selisih agak besar -- cek ulang arsitektur/preprocessing sebelum dipakai produksi!")
+        print(
+            "[PERINGATAN] Selisih agak besar. "
+            "Cek arsitektur/preprocessing."
+        )
     else:
         print("[OK] Output PyTorch dan ONNX cocok.")
 
